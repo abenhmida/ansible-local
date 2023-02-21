@@ -1,0 +1,92 @@
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars:
+    nvim_archive: /tmp/nvim.tar.gz
+    nvim_destination_path: /opt
+    user_home: /home/abenhmida
+    sdkman_folder: '{{ user_home }}/.sdkman'
+    packages:
+    - git
+    - vim
+    - curl
+    - calibre
+    - terminator
+    - python3
+    - zsh
+    - virtualbox
+    - virtualbox-guest-iso  
+    - vagrant
+    - nodejs
+    - npm
+
+  tasks:
+  - name: Download Neovim
+    get_url:
+      url: https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.tar.gz
+      dest: "{{ nvim_archive }}"
+    delegate_to: 127.0.0.1
+
+  - name: Unarchive nvim
+    unarchive: src="{{ nvim_archive }}" dest={{ nvim_destination_path }}
+
+  - name: Create nvim symbolic link 
+    file:
+      src: "/opt/nvim-linux64/bin/nvim"
+      dest: "/usr/local/bin/nvim"
+      state: link
+
+  - name: Install vim Plug
+    shell: curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
+  - name: Clone nvim configuration
+    git: 
+      repo: https://gitlab.com/abenhmida/my-neovim-config.git 
+      dest: "{{ user_home }}/.config/nvim"
+      single_branch: yes
+      key_file: "{{ user_home }}/.ssh/abenhmida@lenovo"
+      version: master
+
+  - name: Update system cache
+    pacman: update_cache=yes
+    become: yes
+
+  - name: Install Packages
+    pacman: name={{ packages }} state=latest
+    become: yes
+
+  - name: Ensure sdkman not install
+    shell: test -d {{sdkman_folder}} && echo "yes" || echo "no"
+    register: is_sdkman_installed
+  
+  - name: Install sdkman
+    shell: curl -s "https://get.sdkman.io" | bash
+    become: no
+    when: is_sdkman_installed.stdout == "no"
+
+  - name: Install java
+    shell: "source {{ user_home }}/.sdkman/bin/sdkman-init.sh && sdk install java 17.0.0-tem"
+    become: no
+
+  - name: Ensure .Oh-myzsh does not exist
+    shell: test -d {{ user_home }}/.oh-my-zsh && echo "yes" || echo "no"
+    register: oh_my_zsh_exists
+
+  - name: Install Oh-my-zsh
+    shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    when: oh_my_zsh_exists.stdout == "no"
+  
+  - name: Change shell
+    ansible.builtin.command: usermod --shell /bin/zsh  abenhmida
+    become: true
+    changed_when: false
+  
+
+      
+
+
+    

@@ -1,0 +1,3 @@
+execute with 
+
+ansible-playbook --ask-become-pass config-playbook.yml to have the necessary previliges to install dependencies
