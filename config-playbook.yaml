@@ -43,14 +43,6 @@
   - name: Install vim Plug
     shell: curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-  - name: Clone nvim configuration
-    git: 
-      repo: https://gitlab.com/abenhmida/my-neovim-config.git 
-      dest: "{{ user_home }}/.config/nvim"
-      single_branch: yes
-      key_file: "{{ user_home }}/.ssh/abenhmida@lenovo"
-      version: master
-
   - name: Update system cache
     pacman: update_cache=yes
     become: yes
