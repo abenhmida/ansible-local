@@ -1,2 +1,2 @@
 [localhost]
-127.0.0.1 ausible_user=abenhmida
+127.0.0.1 ansible_user=abenhmida
