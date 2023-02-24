@@ -1,0 +1,90 @@
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars:
+    nvim_archive: /tmp/nvim.tar.gz
+    nvim_destination_path: /opt
+    user_home: /home/abenhmida
+    sdkman_folder: '{{ user_home }}/.sdkman'
+    packages:
+    - git
+    - vim
+    - curl
+    - calibre
+    - terminator
+    - python3
+    - zsh
+    - build-essential
+    - dkms
+    - linux-headers-5.19.0-32-generic
+    - virtualbox
+    - vagrant
+    - nodejs
+    - npm
+    - tar
+    - gzip
+
+  tasks:
+  - name: Update system cache
+    apt: update_cache=yes
+    become: yes
+
+  - name: Install Packages
+    apt: name={{ packages }} state=latest
+    become: yes
+
+  - name: Download Neovim
+    get_url:
+      url: https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.tar.gz
+      dest: "{{ nvim_archive }}"
+    delegate_to: 127.0.0.1
+
+  - name: Unarchive nvim
+    unarchive: src="{{ nvim_archive }}" dest={{ nvim_destination_path }}
+    become: yes
+
+  - name: Create nvim symbolic link 
+    file:
+      src: "/opt/nvim-linux64/bin/nvim"
+      dest: "/usr/local/bin/nvim"
+      state: link
+    become: yes
+
+  - name: Install vim Plug
+    shell: curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
+  - name: Ensure sdkman not install
+    shell: test -d {{sdkman_folder}} && echo "yes" || echo "no"
+    register: is_sdkman_installed
+  
+  - name: Install sdkman
+    shell: curl -s "https://get.sdkman.io" | bash
+    become: no
+    when: is_sdkman_installed.stdout == "no"
+
+  - name: Install java
+    shell: /usr/bin/sh -c  "$(source {{ user_home }}/.sdkman/bin/sdkman-init.sh && sdk install java 17.0.0-tem)"
+    become: yes
+
+  - name: Ensure .Oh-myzsh does not exist
+    shell: test -d {{ user_home }}/.oh-my-zsh && echo "yes" || echo "no"
+    register: oh_my_zsh_exists
+
+  - name: Install Oh-my-zsh
+    shell: bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    when: oh_my_zsh_exists.stdout == "no"
+  
+  - name: Change shell
+    ansible.builtin.command: usermod --shell /bin/zsh  abenhmida
+    become: true
+    changed_when: false
+  
+
+      
+
+
+    
