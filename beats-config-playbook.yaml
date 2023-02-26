@@ -30,7 +30,7 @@
     - name: Install beats
       apt:
         pkg:
-        - metricbeats
+        - metricbeat
         state: present 
 
     - name: Start Beats service 

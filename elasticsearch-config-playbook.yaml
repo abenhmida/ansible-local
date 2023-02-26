@@ -45,15 +45,6 @@
         line: 'http.port: 9200'
         state: present
 
-    - name: Bind network to localhost
-      lineinfile:
-        path: /etc/elasticsearch/elasticsearch.yml
-        regexp: '^#cluster.initial_master_nodes: \["node-1", "node-2"\]'
-        line: 'cluster.initial_master_nodes: ["localhost"]'
-        state: present
-
-
-
   post_tasks:
   - name: Ensure elasticsearch running
     service:

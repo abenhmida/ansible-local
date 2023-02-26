@@ -1,4 +1,4 @@
-A little collection of ansible playbooks
+🖋️ A little collection of ansible playbooks
 ----------------------------------------
 
 This collection provides various playbooks to configure a local development machine. It is a work in progress.
