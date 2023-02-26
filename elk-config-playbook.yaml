@@ -1,0 +1,62 @@
+---
+- hosts: localhost
+  become: true
+
+  tasks:
+    - name: Download GPG
+      apt_key: 
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        keyring: /usr/share/keyrings/elastic.gpg
+        state: present
+ 
+    - name: Install dependencies
+      apt:
+        pkg: 
+        - apt-transport-https
+
+    - name: Add elastic repostitory
+      apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/elastic.gpg] https://artifacts.elastic.co/packages/7.x/apt stable main
+        filename: elastic-7.x
+        state: present
+ 
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Install elasticsearch 
+      apt:
+        update_cache: yes 
+        pkg:
+        - elasticsearch
+        state: present
+
+    - name: Bind network to localhost
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#network.host.*$'
+        line: 'network.host: "localhost"'
+        state: present
+    
+    - name: configure port to 9200
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#http.port.*$'
+        line: 'http.port: 9200'
+        state: present
+
+    - name: Bind network to localhost
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#cluster.initial_master_nodes: \["node-1", "node-2"\]'
+        line: 'cluster.initial_master_nodes: ["localhost"]'
+        state: present
+
+
+
+  post_tasks:
+  - name: Ensure elasticsearch running
+    service:
+      name: elasticsearch
+      state: started
+      enabled: yes
